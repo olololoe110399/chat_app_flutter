@@ -74,7 +74,7 @@ class AuthProvider extends ChangeNotifier {
             FirestoreConstants.photoUrl: firebaseUser.photoURL,
             FirestoreConstants.id: firebaseUser.uid,
             "createdAt: ": DateTime.now().millisecondsSinceEpoch.toString(),
-            FirestoreConstants.chattingWith: null
+            FirestoreConstants.chattingWith: null,
           });
 
           User? currentUser = firebaseUser;
@@ -94,6 +94,8 @@ class AuthProvider extends ChangeNotifier {
           await prefs.setString(FirestoreConstants.aboutMe, userChat.aboutMe);
           await prefs.setString(
               FirestoreConstants.phoneNumber, userChat.phoneNumber);
+          await prefs.setString(
+              FirestoreConstants.countryCode, userChat.countryCode);
         }
         _status = Status.authenticated;
         notifyListeners();

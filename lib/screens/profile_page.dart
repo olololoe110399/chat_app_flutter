@@ -21,7 +21,7 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   TextEditingController? displayNameController;
   TextEditingController? aboutMeController;
-  final TextEditingController _phoneController = TextEditingController();
+  TextEditingController? _phoneController;
 
   late String currentUserId;
   String dialCodeDigits = '+00';
@@ -44,19 +44,30 @@ class _ProfilePageState extends State<ProfilePage> {
     readLocal();
   }
 
+  @override
+  void dispose() {
+    displayNameController?.dispose();
+    aboutMeController?.dispose();
+    _phoneController?.dispose();
+    super.dispose();
+  }
+
   void readLocal() {
     setState(() {
       id = profileProvider.getPrefs(FirestoreConstants.id) ?? "";
       displayName =
           profileProvider.getPrefs(FirestoreConstants.displayName) ?? "";
-
       photoUrl = profileProvider.getPrefs(FirestoreConstants.photoUrl) ?? "";
       phoneNumber =
           profileProvider.getPrefs(FirestoreConstants.phoneNumber) ?? "";
       aboutMe = profileProvider.getPrefs(FirestoreConstants.aboutMe) ?? "";
+      dialCodeDigits =
+          profileProvider.getPrefs(FirestoreConstants.countryCode) ?? "";
     });
     displayNameController = TextEditingController(text: displayName);
     aboutMeController = TextEditingController(text: aboutMe);
+    _phoneController =
+        TextEditingController(text: phoneNumber.split(dialCodeDigits).join());
   }
 
   Future getImage() async {
@@ -93,6 +104,7 @@ class _ProfilePageState extends State<ProfilePage> {
           photoUrl: photoUrl,
           displayName: displayName,
           phoneNumber: phoneNumber,
+          countryCode: dialCodeDigits,
           aboutMe: aboutMe);
       profileProvider
           .updateFirestoreData(
@@ -115,8 +127,8 @@ class _ProfilePageState extends State<ProfilePage> {
     focusNodeNickname.unfocus();
     setState(() {
       isLoading = true;
-      if (dialCodeDigits != "+00" && _phoneController.text != "") {
-        phoneNumber = dialCodeDigits + _phoneController.text.toString();
+      if (dialCodeDigits != "+00" && _phoneController?.text != "") {
+        phoneNumber = dialCodeDigits + (_phoneController?.text ?? '');
       }
     });
     ChatUser updateInfo = ChatUser(
@@ -124,6 +136,7 @@ class _ProfilePageState extends State<ProfilePage> {
         photoUrl: photoUrl,
         displayName: displayName,
         phoneNumber: phoneNumber,
+        countryCode: dialCodeDigits,
         aboutMe: aboutMe);
     profileProvider
         .updateFirestoreData(
@@ -136,6 +149,10 @@ class _ProfilePageState extends State<ProfilePage> {
       await profileProvider.setPrefs(
         FirestoreConstants.photoUrl,
         photoUrl,
+      );
+      await profileProvider.setPrefs(
+        FirestoreConstants.countryCode,
+        dialCodeDigits,
       );
       await profileProvider.setPrefs(FirestoreConstants.aboutMe, aboutMe);
 
@@ -256,6 +273,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           color: AppColors.spaceCadet),
                     ),
                     TextField(
+                      controller: aboutMeController,
                       decoration: kTextInputDecoration.copyWith(
                           hintText: 'Write about yourself...'),
                       onChanged: (value) {
@@ -284,10 +302,10 @@ class _ProfilePageState extends State<ProfilePage> {
                             dialCodeDigits = country.dialCode!;
                           });
                         },
-                        initialSelection: 'IN',
+                        initialSelection: dialCodeDigits,
                         showCountryOnly: false,
                         showOnlyCountryWhenClosed: false,
-                        favorite: const ["+1", "US", "+91", "IN"],
+                        favorite: const ["+84", "VN"],
                       ),
                     ),
                     vertical15,

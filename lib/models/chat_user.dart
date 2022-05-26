@@ -8,6 +8,7 @@ class ChatUser extends Equatable {
   final String photoUrl;
   final String displayName;
   final String phoneNumber;
+  final String countryCode;
   final String aboutMe;
 
   const ChatUser(
@@ -15,6 +16,7 @@ class ChatUser extends Equatable {
       required this.photoUrl,
       required this.displayName,
       required this.phoneNumber,
+      required this.countryCode,
       required this.aboutMe});
 
   ChatUser copyWith({
@@ -22,6 +24,7 @@ class ChatUser extends Equatable {
     String? photoUrl,
     String? nickname,
     String? phoneNumber,
+    String? countryCode,
     String? email,
   }) =>
       ChatUser(
@@ -29,23 +32,27 @@ class ChatUser extends Equatable {
           photoUrl: photoUrl ?? this.photoUrl,
           displayName: nickname ?? displayName,
           phoneNumber: phoneNumber ?? this.phoneNumber,
+          countryCode: countryCode ?? this.countryCode,
           aboutMe: email ?? aboutMe);
 
   Map<String, dynamic> toJson() => {
         FirestoreConstants.displayName: displayName,
         FirestoreConstants.photoUrl: photoUrl,
         FirestoreConstants.phoneNumber: phoneNumber,
+        FirestoreConstants.countryCode: countryCode,
         FirestoreConstants.aboutMe: aboutMe,
       };
   factory ChatUser.fromDocument(DocumentSnapshot snapshot) {
     String photoUrl = "";
     String nickname = "";
     String phoneNumber = "";
+    String countryCode = "";
     String aboutMe = "";
 
     try {
       photoUrl = snapshot.get(FirestoreConstants.photoUrl);
       nickname = snapshot.get(FirestoreConstants.displayName);
+      countryCode = snapshot.get(FirestoreConstants.countryCode);
       phoneNumber = snapshot.get(FirestoreConstants.phoneNumber);
       aboutMe = snapshot.get(FirestoreConstants.aboutMe);
     } catch (e) {
@@ -58,9 +65,11 @@ class ChatUser extends Equatable {
         photoUrl: photoUrl,
         displayName: nickname,
         phoneNumber: phoneNumber,
+        countryCode: countryCode,
         aboutMe: aboutMe);
   }
   @override
   // TODO: implement props
-  List<Object?> get props => [id, photoUrl, displayName, phoneNumber, aboutMe];
+  List<Object?> get props =>
+      [id, photoUrl, displayName, phoneNumber, countryCode, aboutMe];
 }
