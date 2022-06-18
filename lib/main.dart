@@ -1,3 +1,9 @@
+import 'dart:io';
+
+import 'package:chat_app/constants/firebase_messaging_constants.dart';
+import 'package:chat_app/helper/firebase_messaging_data_source.dart';
+import 'package:chat_app/helper/local_push_notification_helper.dart';
+import 'package:chat_app/models/app_notification.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -18,18 +24,43 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   SharedPreferences prefs = await SharedPreferences.getInstance();
-
+  await FirebaseMessagingHelper.instance.init();
+  await FirebaseMessagingHelper.instance.requestPermission();
+  await LocalPushNotificationHelper.instance.init();
   runApp(MyApp(
     prefs: prefs,
   ));
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   final SharedPreferences prefs;
-  final FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
-  final FirebaseStorage firebaseStorage = FirebaseStorage.instance;
 
   MyApp({Key? key, required this.prefs}) : super(key: key);
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  final FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
+
+  final FirebaseStorage firebaseStorage = FirebaseStorage.instance;
+
+  @override
+  void initState() {
+    FirebaseMessagingHelper.instance.onMessage.listen((event) {
+      LocalPushNotificationHelper.instance.notify(
+        AppNotification(
+          title: event.notification?.title ?? '',
+          message: event.notification?.body ?? '',
+          image: event.data[FirebaseMessagingConstants.firebaseKeyImage] ?? '',
+          isAndroid: event.notification?.android != null,
+          data: event.data,
+        ),
+      );
+    });
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,14 +69,14 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider<AuthProvider>(
           create: (_) => AuthProvider(
             firebaseFirestore: firebaseFirestore,
-            prefs: prefs,
+            prefs: widget.prefs,
             googleSignIn: GoogleSignIn(),
             firebaseAuth: FirebaseAuth.instance,
           ),
         ),
         Provider<ProfileProvider>(
           create: (_) => ProfileProvider(
-            prefs: prefs,
+            prefs: widget.prefs,
             firebaseFirestore: firebaseFirestore,
             firebaseStorage: firebaseStorage,
           ),
@@ -57,7 +88,7 @@ class MyApp extends StatelessWidget {
         ),
         Provider<ChatProvider>(
           create: (_) => ChatProvider(
-            prefs: prefs,
+            prefs: widget.prefs,
             firebaseStorage: firebaseStorage,
             firebaseFirestore: firebaseFirestore,
           ),
